@@ -1,0 +1,42 @@
+plugins {
+    id 'org.springframework.boot' version '3.4.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // WebClient for reCAPTCHA
+    implementation 'org.springframework.boot:spring-boot-starter-aop' // AOP for CAPTCHA
+
+    // Swagger (OpenAPI 3.0)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4'
+
+    // WebAuthn4J - Passkey 처리 핵심 라이브러리
+    implementation 'com.webauthn4j:webauthn4j-core:0.30.2.RELEASE'
+
+    // Database - PostgreSQL
+    runtimeOnly 'org.postgresql:postgresql'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // TODO: 확인 후 testImplementation으로 변경
+    implementation 'com.webauthn4j:webauthn4j-test:0.30.2.RELEASE'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

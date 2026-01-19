@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: passkey-server
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/passkey
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# WebAuthn 설정
+webauthn:
+  rp:
+    id: localhost
+    name: Passkey Demo
+    origin: http://localhost:8080
+
+# reCAPTCHA 설정
+recaptcha:
+  v3:
+    site-key: ${RECAPTCHA_V3_SITE_KEY:}
+    secret-key: ${RECAPTCHA_V3_SECRET_KEY:}
+    threshold: 1.1
+  v2:
+    site-key: ${RECAPTCHA_V2_SITE_KEY:}
+    secret-key: ${RECAPTCHA_V2_SECRET_KEY:}
+  verify-url: https://www.google.com/recaptcha/api/siteverify
+  enabled: ${RECAPTCHA_ENABLED:true}

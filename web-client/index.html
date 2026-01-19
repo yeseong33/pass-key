@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passkey Demo</title>
+    <!-- reCAPTCHA v3 + v2 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6Lf8-k4sAAAAAMSGbPDZ4gmHaFU8V9B-Vjdv2w8O" async defer></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #4CAF50;
+            color: white;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            display: block;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+            display: block;
+        }
+        .status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+            display: block;
+        }
+        .divider {
+            text-align: center;
+            color: #999;
+            margin: 20px 0;
+            font-size: 0.9em;
+        }
+        .server-config {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .server-config input {
+            margin-top: 5px;
+        }
+        .passkey-icon {
+            font-size: 3em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        /* reCAPTCHA v2 Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        .modal-content h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .modal-content p {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        #recaptchaV2Container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .modal-close {
+            background: #e0e0e0;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: auto;
+        }
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Passkey Demo</h1>
+
+        <div class="card">
+            <div class="server-config">
+                <label>Server URL</label>
+                <input type="text" id="serverUrl" value="http://localhost:8080" placeholder="http://localhost:8080">
+            </div>
+            <button onclick="checkHealth()" style="background: #607d8b; color: white;">
+                Server Health Check
+            </button>
+            <div id="healthStatus" class="status"></div>
+        </div>
+
+        <div class="card">
+            <div class="passkey-icon">🔐</div>
+            <h2>Passkey Register</h2>
+            <div class="form-group">
+                <label>Email (Username)</label>
+                <input type="email" id="regUsername" placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="regDisplayName" placeholder="Display Name">
+            </div>
+            <button class="btn-primary" id="registerBtn" onclick="register()">
+                Register Passkey
+            </button>
+            <div id="registerStatus" class="status"></div>
+        </div>
+
+        <div class="card">
+            <div class="passkey-icon">🔓</div>
+            <h2>Passkey Login</h2>
+            <div class="form-group">
+                <label>Email (Optional)</label>
+                <input type="email" id="authUsername" placeholder="user@example.com">
+            </div>
+            <button class="btn-secondary" id="authBtn" onclick="authenticate()">
+                Login with Passkey
+            </button>
+            <div id="authStatus" class="status"></div>
+        </div>
+    </div>
+
+    <!-- reCAPTCHA v2 Modal -->
+    <div class="modal-overlay" id="recaptchaModal">
+        <div class="modal-content">
+            <h3>Security Verification</h3>
+            <p>Please complete the CAPTCHA to continue</p>
+            <div id="recaptchaV2Container"></div>
+            <button class="modal-close" onclick="closeRecaptchaModal()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== reCAPTCHA Configuration ====================
+        // TODO: Replace with your actual site keys from Google reCAPTCHA Admin
+        const RECAPTCHA_V3_SITE_KEY = '6Lf8-k4sAAAAAMSGbPDZ4gmHaFU8V9B-Vjdv2w8O';  // v3 site key
+        const RECAPTCHA_V2_SITE_KEY = '6LcF-04sAAAAAAG8I-d0-kf2POtpZR4rlboB1Geu';  // v2 site key
+
+        // reCAPTCHA state
+        let recaptchaV2WidgetId = null;
+
+        function getServerUrl() {
+            return document.getElementById('serverUrl').value.replace(/\/$/, '');
+        }
+
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = 'status ' + type;
+        }
+
+        // Base64URL encode/decode utilities
+        function base64UrlEncode(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let str = '';
+            for (const byte of bytes) {
+                str += String.fromCharCode(byte);
+            }
+            return btoa(str)
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        function base64UrlDecode(str) {
+            str = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (str.length % 4) {
+                str += '=';
+            }
+            const binaryStr = atob(str);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // ==================== reCAPTCHA Functions ====================
+
+        // Get reCAPTCHA v3 token
+        async function getRecaptchaV3Token(action) {
+            if (!RECAPTCHA_V3_SITE_KEY || RECAPTCHA_V3_SITE_KEY === '{}') {
+                console.log('No reCAPTCHA v3 site key configured, skipping');
+                return null;
+            }
+
+            try {
+                await waitForRecaptcha();
+                return await new Promise((resolve, reject) => {
+                    grecaptcha.execute(RECAPTCHA_V3_SITE_KEY, { action })
+                        .then(resolve)
+                        .catch(reject);
+                });
+            } catch (error) {
+                console.error('reCAPTCHA v3 error:', error);
+                return null;
+            }
+        }
+
+        // Wait for reCAPTCHA to be ready
+        function waitForRecaptcha() {
+            return new Promise((resolve) => {
+                if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {
+                    grecaptcha.ready(resolve);
+                } else {
+                    const check = setInterval(() => {
+                        if (typeof grecaptcha !== 'undefined' && grecaptcha.ready) {
+                            clearInterval(check);
+                            grecaptcha.ready(resolve);
+                        }
+                    }, 100);
+                }
+            });
+        }
+
+        // Show reCAPTCHA v2 modal
+        function showRecaptchaV2Modal() {
+            return new Promise((resolve, reject) => {
+                if (!RECAPTCHA_V2_SITE_KEY || RECAPTCHA_V2_SITE_KEY === '{}') {
+                    reject(new Error('No reCAPTCHA v2 site key configured'));
+                    return;
+                }
+
+                const modal = document.getElementById('recaptchaModal');
+                const container = document.getElementById('recaptchaV2Container');
+
+                // Clear previous widget
+                container.innerHTML = '';
+
+                modal.classList.add('show');
+
+                // Render v2 widget
+                waitForRecaptcha().then(() => {
+                    recaptchaV2WidgetId = grecaptcha.render(container, {
+                        sitekey: RECAPTCHA_V2_SITE_KEY,
+                        callback: (token) => {
+                            window.recaptchaReject = null;
+                            modal.classList.remove('show');
+                            resolve(token);
+                        },
+                        'expired-callback': () => {
+                            window.recaptchaReject = null;
+                            modal.classList.remove('show');
+                            reject(new Error('reCAPTCHA expired'));
+                        },
+                        'error-callback': () => {
+                            window.recaptchaReject = null;
+                            modal.classList.remove('show');
+                            reject(new Error('reCAPTCHA error'));
+                        }
+                    });
+                });
+
+                // Store reject for cancel button
+                window.recaptchaReject = reject;
+            });
+        }
+
+        function closeRecaptchaModal() {
+            const modal = document.getElementById('recaptchaModal');
+            modal.classList.remove('show');
+            if (window.recaptchaReject) {
+                window.recaptchaReject(new Error('User cancelled'));
+                window.recaptchaReject = null;
+            }
+        }
+
+        // ==================== API Functions ====================
+
+        async function checkHealth() {
+            try {
+                showStatus('healthStatus', 'Checking...', 'info');
+                const response = await fetch(`${getServerUrl()}/api/auth/health`);
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    showStatus('healthStatus', 'Server is running!', 'success');
+                } else {
+                    showStatus('healthStatus', 'Server returned unexpected response', 'error');
+                }
+            } catch (error) {
+                showStatus('healthStatus', 'Cannot connect to server: ' + error.message, 'error');
+            }
+        }
+
+        async function register(v2Token = null) {
+            const username = document.getElementById('regUsername').value;
+            const displayName = document.getElementById('regDisplayName').value || username;
+
+            if (!username) {
+                showStatus('registerStatus', 'Please enter email', 'error');
+                return;
+            }
+
+            try {
+                showStatus('registerStatus', 'Starting registration...', 'info');
+                document.getElementById('registerBtn').disabled = true;
+
+                // Build headers with CAPTCHA tokens
+                const headers = { 'Content-Type': 'application/json' };
+
+                if (v2Token) {
+                    headers['X-Captcha-Token-V2'] = v2Token;
+                } else {
+                    const captchaToken = await getRecaptchaV3Token('register');
+                    if (captchaToken) {
+                        headers['X-Captcha-Token'] = captchaToken;
+                    }
+                }
+
+                // 1. Get challenge from server
+                const startResponse = await fetch(`${getServerUrl()}/api/auth/register/start`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ username, displayName })
+                });
+
+                // Handle v2 required (HTTP 428)
+                if (startResponse.status === 428) {
+                    const data = await startResponse.json();
+                    if (data.requireV2Captcha) {
+                        showStatus('registerStatus', 'Additional verification required...', 'info');
+                        try {
+                            const v2Token = await showRecaptchaV2Modal();
+                            document.getElementById('registerBtn').disabled = false;
+                            return register(v2Token); // Retry with v2 token
+                        } catch (e) {
+                            throw new Error('CAPTCHA verification cancelled');
+                        }
+                    }
+                }
+
+                if (!startResponse.ok) {
+                    const error = await startResponse.json();
+                    throw new Error(error.message || 'Registration start failed');
+                }
+
+                const options = await startResponse.json();
+                console.log('Registration options:', options);
+
+                // 2. Create credential using WebAuthn API
+                const publicKeyCredentialCreationOptions = {
+                    challenge: base64UrlDecode(options.challenge),
+                    rp: {
+                        id: options.rp.id,
+                        name: options.rp.name
+                    },
+                    user: {
+                        id: base64UrlDecode(options.user.id),
+                        name: options.user.name,
+                        displayName: options.user.displayName
+                    },
+                    pubKeyCredParams: options.pubKeyCredParams,
+                    timeout: options.timeout,
+                    attestation: options.attestation || 'none',
+                    authenticatorSelection: {
+                        authenticatorAttachment: 'platform',
+                        residentKey: 'required',
+                        userVerification: 'required'
+                    }
+                };
+
+                showStatus('registerStatus', 'Waiting for biometric...', 'info');
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+
+                console.log('Created credential:', credential);
+
+                // 3. Send credential to server
+                const finishResponse = await fetch(`${getServerUrl()}/api/auth/register/finish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        id: credential.id,
+                        rawId: base64UrlEncode(credential.rawId),
+                        type: credential.type,
+                        response: {
+                            clientDataJSON: base64UrlEncode(credential.response.clientDataJSON),
+                            attestationObject: base64UrlEncode(credential.response.attestationObject)
+                        }
+                    })
+                });
+
+                if (!finishResponse.ok) {
+                    const error = await finishResponse.json();
+                    throw new Error(error.message || 'Registration finish failed');
+                }
+
+                const result = await finishResponse.json();
+                showStatus('registerStatus', 'Passkey registered successfully!', 'success');
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                if (error.name === 'NotAllowedError') {
+                    showStatus('registerStatus', 'User cancelled or biometric failed', 'error');
+                } else {
+                    showStatus('registerStatus', 'Error: ' + error.message, 'error');
+                }
+            } finally {
+                document.getElementById('registerBtn').disabled = false;
+            }
+        }
+
+        async function authenticate(v2Token = null) {
+            const username = document.getElementById('authUsername').value;
+
+            try {
+                showStatus('authStatus', 'Starting authentication...', 'info');
+                document.getElementById('authBtn').disabled = true;
+
+                // Build headers with CAPTCHA tokens
+                const headers = { 'Content-Type': 'application/json' };
+
+                if (v2Token) {
+                    headers['X-Captcha-Token-V2'] = v2Token;
+                } else {
+                    const captchaToken = await getRecaptchaV3Token('authenticate');
+                    if (captchaToken) {
+                        headers['X-Captcha-Token'] = captchaToken;
+                    }
+                }
+
+                // 1. Get challenge from server
+                const startResponse = await fetch(`${getServerUrl()}/api/auth/authenticate/start`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ username: username || null })
+                });
+
+                // Handle v2 required (HTTP 428)
+                if (startResponse.status === 428) {
+                    const data = await startResponse.json();
+                    if (data.requireV2Captcha) {
+                        showStatus('authStatus', 'Additional verification required...', 'info');
+                        try {
+                            const v2Token = await showRecaptchaV2Modal();
+                            document.getElementById('authBtn').disabled = false;
+                            return authenticate(v2Token); // Retry with v2 token
+                        } catch (e) {
+                            throw new Error('CAPTCHA verification cancelled');
+                        }
+                    }
+                }
+
+                if (!startResponse.ok) {
+                    const error = await startResponse.json();
+                    throw new Error(error.message || 'Authentication start failed');
+                }
+
+                const options = await startResponse.json();
+                console.log('Authentication options:', options);
+
+                // 2. Get credential using WebAuthn API
+                const publicKeyCredentialRequestOptions = {
+                    challenge: base64UrlDecode(options.challenge),
+                    timeout: options.timeout,
+                    rpId: options.rpId,
+                    userVerification: options.userVerification || 'required'
+                };
+
+                // Add allowCredentials if provided
+                if (options.allowCredentials && options.allowCredentials.length > 0) {
+                    publicKeyCredentialRequestOptions.allowCredentials = options.allowCredentials.map(cred => ({
+                        type: cred.type,
+                        id: base64UrlDecode(cred.id)
+                    }));
+                }
+
+                showStatus('authStatus', 'Waiting for biometric...', 'info');
+
+                const credential = await navigator.credentials.get({
+                    publicKey: publicKeyCredentialRequestOptions
+                });
+
+                console.log('Got credential:', credential);
+
+                // 3. Send assertion to server
+                const finishResponse = await fetch(`${getServerUrl()}/api/auth/authenticate/finish`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: credential.id,
+                        rawId: base64UrlEncode(credential.rawId),
+                        type: credential.type,
+                        response: {
+                            clientDataJSON: base64UrlEncode(credential.response.clientDataJSON),
+                            authenticatorData: base64UrlEncode(credential.response.authenticatorData),
+                            signature: base64UrlEncode(credential.response.signature),
+                            userHandle: credential.response.userHandle
+                                ? base64UrlEncode(credential.response.userHandle)
+                                : null
+                        }
+                    })
+                });
+
+                if (!finishResponse.ok) {
+                    const error = await finishResponse.json();
+                    throw new Error(error.message || 'Authentication finish failed');
+                }
+
+                const result = await finishResponse.json();
+                showStatus('authStatus', `Login success! Welcome, ${result.username}`, 'success');
+
+            } catch (error) {
+                console.error('Authentication error:', error);
+                if (error.name === 'NotAllowedError') {
+                    showStatus('authStatus', 'User cancelled or biometric failed', 'error');
+                } else {
+                    showStatus('authStatus', 'Error: ' + error.message, 'error');
+                }
+            } finally {
+                document.getElementById('authBtn').disabled = false;
+            }
+        }
+
+        // Check WebAuthn support
+        if (!window.PublicKeyCredential) {
+            document.body.innerHTML = `
+                <div class="container">
+                    <div class="card">
+                        <h2>Browser Not Supported</h2>
+                        <p>This browser does not support WebAuthn/Passkey.</p>
+                        <p>Please use Safari, Chrome, or Edge.</p>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

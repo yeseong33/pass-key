@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: passkey-db
+    environment:
+      POSTGRES_DB: passkey
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - passkey-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  passkey-data:

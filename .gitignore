@@ -1,0 +1,69 @@
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# IDE - Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+
+# IDE - VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Application properties with sensitive data
+application-local.yml
+application-local.yaml
+application-local.properties
+**/src/main/resources/application-secret*.yml
+**/src/main/resources/application-secret*.yaml
+**/src/main/resources/application-secret*.properties
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# JRebel
+rebel.xml
+
+# Lombok
+.lombok/
